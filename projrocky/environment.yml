@@ -1,0 +1,22 @@
+# conda env create -f environment.yml   (or: mamba env create -f environment.yml)
+name: rockyeye
+channels: [conda-forge]
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - jwst==3.0.0
+      - batman-package==2.5.3
+      - emcee==3.1.6
+      - corner==2.3.0
+      - astroquery==0.4.11
+      - kagglehub==1.0.3       # official Kaggle client; public datasets need no login
+      - photutils==3.1.1      # only used by the tests, as an independent reference
+      - numpy
+      - scipy
+      - astropy
+      - matplotlib
+      - h5py
+      - pyyaml
+      - requests
+      - pytest

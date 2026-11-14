@@ -1,0 +1,44 @@
+# RockyEye config — synthetic stamps with a known eclipse (rockyeye/synth.py).
+# The laptop-side verification of stages 03-10: same code path as the real configs,
+# but the truth is known, so "did we recover the injected depth?" has an answer today.
+extends: lhs1140b_sim.yaml
+name: synthetic
+target: synthetic LHS 1140 b-like
+
+source:
+  kind: synthetic
+  seed: 20261112
+  segments_per_visit: 3
+  n_integrations: 2283        # same visit length and cadence as the simulated eclipses 2/3/5
+  cadence_s: 13.5
+  first_epoch: 120            # orbit number of the first visit
+  star_flux: 30000.0          # total star signal on the stamp (MJy/sr summed)
+  sky: 56.5                   # per pixel
+  noise_gain: 0.0077          # variance = gain * signal: gives ~650 ppm per integration in a 4.5 px aperture
+  ramp_amp: 3.5e-3
+  ramp_tau_h: 0.5
+  slope_per_h: 3.0e-5
+  jitter_px: 0.003
+  x_sensitivity: 1.0e-4       # fractional flux change per 1-sigma shift in x
+  cosmic_ray_rate: 2.0e-5
+  n_bad_pixels: 12
+  truth: {depth_ppm: 100.0, dt_min: 12.0}
+
+paths:
+  data: data/synthetic
+  products: products/synthetic
+
+visits: [eclipse1, eclipse2, eclipse3, eclipse4, eclipse5, eclipse6]
+
+truth: {depth_ppm: 100.0, dt_min: 12.0}
+
+fit:
+  priors:
+    depth_ppm: [-500, 1000]
+    dt_min: [-90, 90]
+    tau_hours: [0.02, 8.0]
+
+injection:
+  depths_ppm: [0, 50, 100, 150, 250]
+  n_trials: 100
+  n_dt_grid: 37

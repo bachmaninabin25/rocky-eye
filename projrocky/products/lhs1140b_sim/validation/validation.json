@@ -1,0 +1,97 @@
+{
+  "plan": {
+    "eclipse1": {
+      "t_inj": 2461232.7257725196,
+      "t_real": 2461232.4338570335,
+      "radius": 6.0,
+      "room_hours": 11.599700007587671
+    },
+    "eclipse2": {
+      "t_inj": 2461257.0116151785,
+      "t_real": 2461257.1710870336,
+      "radius": 5.0,
+      "room_hours": 5.242405693978071
+    },
+    "eclipse3": {
+      "t_inj": 2461355.9507729616,
+      "t_real": 2461356.1200070335,
+      "radius": 5.5,
+      "room_hours": 5.710992123931646
+    },
+    "eclipse4": {
+      "t_inj": 2461381.0474564335,
+      "t_real": 2461380.8572370335,
+      "radius": 6.0,
+      "room_hours": 6.718287862837315
+    },
+    "eclipse5": {
+      "t_inj": 2461405.4363827026,
+      "t_real": 2461405.5944670336,
+      "radius": 6.0,
+      "room_hours": 5.175804566591978
+    },
+    "eclipse6": {
+      "t_inj": 2461578.9430430867,
+      "t_real": 2461578.7550770333,
+      "radius": 5.5,
+      "room_hours": 6.6101272366940975
+    },
+    "eclipse7": {
+      "t_inj": 2461603.291542414,
+      "t_real": 2461603.4923070334,
+      "radius": 5.5,
+      "room_hours": 7.224458388984203
+    },
+    "eclipse8": {
+      "t_inj": 2461627.90852296,
+      "t_real": 2461628.2295370335,
+      "radius": 5.5,
+      "room_hours": 12.996432200074196
+    },
+    "eclipse9": {
+      "t_inj": 2461727.050596931,
+      "t_real": 2461727.1784570334,
+      "radius": 5.5,
+      "room_hours": 3.725041575729847
+    }
+  },
+  "results": {
+    "0": {
+      "injected": 0,
+      "recovered": 0.133031378519318,
+      "err": 15.062615302273763,
+      "pull": 0.008831891132427473,
+      "dt_min": -0.4064539549664503,
+      "ml_depth": -10.109801150729268,
+      "converged": true
+    },
+    "80": {
+      "injected": 80,
+      "recovered": 81.55320427987526,
+      "err": 13.539390035135249,
+      "pull": 0.1147174485589553,
+      "dt_min": -5.067653523634221,
+      "ml_depth": 82.45934115011518,
+      "converged": true,
+      "differential_gain": 1.0177521612669493
+    },
+    "160": {
+      "injected": 160,
+      "recovered": 160.0009250887113,
+      "err": 13.279502064429025,
+      "pull": 6.966290654757006e-05,
+      "dt_min": -3.450756082863779,
+      "ml_depth": 160.02555345093077,
+      "converged": true,
+      "differential_gain": 0.9991743356887
+    }
+  },
+  "checks": {
+    "inject_0_within_2sigma": true,
+    "inject_80_within_2sigma": true,
+    "inject_160_within_2sigma": true,
+    "gain_80_within_5pct": true,
+    "gain_160_within_5pct": true
+  },
+  "passed": true
+}

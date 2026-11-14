@@ -1,0 +1,27 @@
+# --- data: only small, needed files are kept ---
+projrocky/data/*
+!projrocky/data/manifests/
+!projrocky/data/benchmarks/
+*.fits
+*.asdf
+*.h5
+*.h5.key
+*.npz
+*.npz.key
+crds_cache/
+
+# --- generated outputs: keep tables, summaries, figures; drop heavy intermediates ---
+projrocky/products/*/stage02/
+projrocky/logs/
+
+# --- redundant files waiting to be emptied ---
+_to_delete/
+
+# --- python / OS ---
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+rocky_upload.tgz

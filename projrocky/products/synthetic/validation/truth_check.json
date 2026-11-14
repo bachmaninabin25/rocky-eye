@@ -1,0 +1,41 @@
+{
+  "config": "synthetic",
+  "source": null,
+  "pass_sigma": 2.0,
+  "depth_ppm": {
+    "truth": 100.0,
+    "median": 117.14379181197666,
+    "minus": 15.10532106366982,
+    "plus": 14.882392984733684,
+    "offset": 17.143791811976655,
+    "offset_sigma": 1.1349505078187059,
+    "truth_quantile": 0.12713441330998249,
+    "inside_68": false,
+    "inside_95": true
+  },
+  "dt_min": {
+    "truth": 12.0,
+    "median": 14.743416323576284,
+    "minus": 1.8426806958482373,
+    "plus": 1.9576784172237254,
+    "offset": 2.743416323576284,
+    "offset_sigma": 1.4888180734500032,
+    "truth_quantile": 0.06523642732049037,
+    "inside_68": false,
+    "inside_95": true
+  },
+  "per_eclipse": {
+    "pulls": {
+      "eclipse1": -0.8801249323232873,
+      "eclipse2": 1.2396699366794235,
+      "eclipse3": 2.022515134089138,
+      "eclipse4": 0.9796752827510837,
+      "eclipse5": -0.6243860474690495,
+      "eclipse6": 0.9123520196070245
+    },
+    "chi2": 8.583976719611895,
+    "n": 6,
+    "rms_pull": 1.196103167206735
+  },
+  "passed": true
+}

@@ -1,0 +1,101 @@
+# RockyEye config — simulated LHS 1140 b eclipses (Rocky Worlds Data Challenge 2026).
+# Milestone 1: the pipeline must prove itself here before any real data is touched.
+name: lhs1140b_sim
+target: LHS 1140 b (simulated)
+
+source:
+  kind: kaggle
+  dataset: stsci/rocky-worlds-lhs-1140b-simulations   # public, CC BY 4.0, no login needed
+  manifest: data/manifests/lhs1140b/manifest.csv
+  min_free_gb: 8        # never let free disk drop below this
+  total_gb_expected: 199
+
+paths:
+  data: data/lhs1140b_sim
+  products: products/lhs1140b_sim
+  crds: data/crds_cache
+
+visits: [eclipse1, eclipse2, eclipse3, eclipse4, eclipse5, eclipse6, eclipse7, eclipse8, eclipse9]
+
+# What to keep after each segment is calibrated. Stamps are always kept.
+keep: {raw: false, rateints: false, calints: false}
+
+# Official jwst pipeline, stage 1. Only deviations from the defaults are listed.
+stage1:
+  chunk_ints: 50          # integrations calibrated at once (bounds memory on a 16 GB laptop)
+  steps:
+    # 6 sigma: the default 4 sigma over-flags bright TSO pixels. The across-integration
+    # sigma-clip variant is switched off so results do not depend on the chunk size.
+    jump: {rejection_threshold: 6.0, minimum_sigclip_groups: 1000000}
+    ramp_fit: {maximum_cores: half}
+stage2:
+  steps:
+    resample: {skip: true}
+
+stamp:
+  half_size: 40          # cut-out is 81x81 px around the star
+
+photometry:
+  aperture_radii: [3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0]   # px; best one chosen by scatter
+  annulus: [16.0, 30.0]  # px, background ring
+  centroid_box: 5        # half-width (px) of the centroiding window
+  outlier_sigma: 5.0
+  gain: 3.1              # e-/DN, only used for the photon-noise estimate
+
+# System parameters: NASA Exoplanet Archive values quoted in the challenge tutorial (Cadieux+ 2024).
+system:
+  period: 24.73723
+  t0: 2458399.9300       # BJD_TDB transit mid-time
+  a_rs: 95.3
+  inc: 89.86
+  rp_rs: 0.07390
+  teff: 3096.0
+  teff_err: 48.0
+  rstar_rsun: 0.2159
+  logg: 5.04
+  feh: -0.15
+
+# Official injected depth of the challenge simulation. NOT PUBLIC YET (workshop Nov 16-18, 2026).
+# Fill in when STScI releases it, then run:  python scripts/revalidate_truth.py --config configs/lhs1140b_sim.yaml
+truth: {depth_ppm: null, dt_min: null, source: null}
+
+fit:
+  trim_start: 0          # integrations dropped at the start of each visit (settling)
+  bin_size: 4
+  # Centroid (x, y) decorrelation is the floor of every candidate; BIC chooses the extras.
+  # Why: on synthetic data with pointing drift, dropping x,y kept the depth unbiased on
+  # average but tripled its scatter (77 vs 24 ppm, 10 realisations) while the quoted error
+  # stayed ~35 ppm, and "simplest within dBIC 2" dropped them in 3 of 6 visits. Without
+  # drift, keeping x,y costs nothing (23 vs 23 ppm). See REPORT.md section 5.1.
+  candidate_models: [linear+xy, poly2+xy, exp+xy, exp+xyw, exp+xywbg, exp2+xy]
+  priors:
+    depth_ppm: [-500, 1000]
+    dt_min: [-240, 240]  # eclipse-time offset from phase 0.5 (wide: the truth is unknown)
+    tau_hours: [0.02, 8.0]
+  shared_time: true
+  mcmc: {n_walkers: 64, max_steps: 60000, check_every: 3000, tau_multiple: 50, seed: 42}
+
+injection:
+  depths_ppm: [0, 40, 80, 120, 200]
+  n_trials: 40
+  detection_sigma: 3.0
+
+# Pixel-level injection gate (scripts/validate.py).
+validation:
+  depths_ppm: [0, 80, 160]
+  min_baseline_durations: 0.25  # out-of-eclipse baseline required on each side of the injected eclipse
+  mask_pad_min: 10
+  dt_min: [-20, 20]
+  pass_sigma: 2.0              # 1 sigma would fail a correct pipeline 32% of the time; the sharp test is the 5% gain check
+  mcmc: {max_steps: 30000}
+
+physics:
+  seed: 11
+  n_draws: 20000
+  primary_stellar_model: blackbody_teff
+  stellar_models:
+    blackbody_teff: {mode: blackbody}
+  reference_scenario: bare rock (A=0)
+  scenarios:
+    bare rock (A=0): {albedo: 0.0, eps: 0.0}
+    full redistribution (A=0): {albedo: 0.0, eps: 1.0}

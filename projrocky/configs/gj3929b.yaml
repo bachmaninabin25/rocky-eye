@@ -1,0 +1,146 @@
+# RockyEye config — real JWST/MIRI F1500W eclipses of GJ 3929 b (Rocky Worlds DDT, program 9235).
+# Do not run until the simulated-data validation (configs/lhs1140b_sim.yaml) has passed.
+name: gj3929b
+requires_validation: configs/lhs1140b_sim.yaml   # real data stay locked until this passes
+target: GJ 3929 b
+
+source:
+  kind: kaggle             # the challenge's frozen copy of the program-9235 uncal files (same as MAST)
+  dataset: stsci/rocky-worlds-gj-3929b-observations
+  manifest: data/manifests/gj3929b/manifest.csv
+  # Eclipse 4 was split in two exposures (frame-count limit) with a 16 min gap near
+  # mid-eclipse: observation 4 and observation 5. They become separate fit units.
+  visit_from_obsnum: {4: eclipse4a, 5: eclipse4b}
+  min_free_gb: 8
+  total_gb_expected: 32
+
+paths:
+  data: data/gj3929b
+  products: products/gj3929b
+  crds: data/crds_cache
+
+# Fit units. Each has its own systematics model; eclipse 4 is two units sharing one depth.
+visits: [eclipse1, eclipse2, eclipse3, eclipse4a, eclipse4b]
+eclipses:
+  eclipse1: [eclipse1]
+  eclipse2: [eclipse2]
+  eclipse3: [eclipse3]
+  eclipse4: [eclipse4a, eclipse4b]
+
+keep: {raw: false, rateints: false, calints: false}
+
+stage1:
+  chunk_ints: 50          # integrations calibrated at once (bounds memory on a 16 GB laptop)
+  steps:
+    jump: {rejection_threshold: 6.0, minimum_sigclip_groups: 1000000}
+    ramp_fit: {maximum_cores: half}
+stage2:
+  steps:
+    resample: {skip: true}
+
+stamp:
+  half_size: 40
+
+photometry:
+  aperture_radii: [3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0]
+  annulus: [16.0, 30.0]
+  centroid_box: 5
+  outlier_sigma: 5.0
+  gain: 3.1
+
+# Orbit: Xue et al. 2025 (arXiv:2508.12516, ApJL), Table 1 (joint TESS + RV + ground fit).
+# Star: Kemmer et al. 2022 (A&A, arXiv:2202.00970), Table 2: Teff = 3369 +/- 51 K,
+#   R = 0.315 +/- 0.010 Rsun, log g = 4.84, d = 15.830 +/- 0.006 pc (Gaia EDR3 parallax
+#   63.173 +/- 0.020 mas). These are the values Xue+25 adopted (their T_max = 737 +/- 14 K
+#   follows from them). Checked 2026-11-13 against the ar5iv copies of both papers.
+# Alternative, not used: Beard et al. 2022 (ApJ, arXiv:2207.10672), Table 2: Teff = 3384 +/- 88 K,
+#   R = 0.32 +/- 0.01 Rsun, d = 15.822 +/- 0.006 pc. The Teff difference (15 K) changes
+#   T_max by 3 K; the radius difference (1.6%) changes the flux-based stellar brightness by 3%.
+system:
+  period: 2.6162644
+  t0: 2460452.8997
+  a_rs: 17.05
+  a_rs_err: 0.43
+  inc: 89.3
+  rp_rs: 0.0318
+  rp_rs_err: 0.0007
+  teff: 3369.0
+  teff_err: 51.0
+  rstar_rsun: 0.315
+  rstar_rsun_err: 0.010
+  dist_pc: 15.830
+  dist_pc_err: 0.006
+
+fit:
+  trim_start: 500
+  bin_size: 4
+  # Centroid (x, y) decorrelation is the floor of every candidate; BIC chooses the extras.
+  # Why: on synthetic data with pointing drift, dropping x,y kept the depth unbiased on
+  # average but tripled its scatter (77 vs 24 ppm, 10 realisations) while the quoted error
+  # stayed ~35 ppm, and "simplest within dBIC 2" dropped them in 3 of 6 visits. Without
+  # drift, keeping x,y costs nothing (23 vs 23 ppm). See REPORT.md section 5.1.
+  candidate_models: [linear+xy, poly2+xy, exp+xy, exp+xyw, exp+xywbg, exp2+xy]
+  priors:
+    depth_ppm: [-500, 1000]
+    dt_min: [-120, 60]
+    tau_hours: [0.02, 8.0]
+  shared_time: true
+  mcmc: {n_walkers: 64, max_steps: 60000, check_every: 3000, tau_multiple: 50, seed: 42}
+  extra_joint_fits:
+    joint_12: [eclipse1, eclipse2]     # the two visits analysed by Xue et al. 2025
+
+injection:
+  depths_ppm: [0, 50, 100, 150, 200, 300]
+  n_trials: 200
+  detection_sigma: 3.0
+  n_dt_grid: 37
+
+physics:
+  seed: 11
+  n_draws: 20000
+  primary_stellar_model: measured_flux
+  # Aperture/sky radii and correction for 70% encircled energy: CRDS jwst_miri_apcorr_0014.fits (F1500W).
+  flux_calibration: {radius: 5.6944, skyin: 8.6297, skyout: 11.4520, apcorr: 1.4974, systematic_frac: 0.03, apply_to: measured_flux}
+  stellar_models:
+    measured_flux: {mode: flux, flux_mjy: 19.19, flux_mjy_err: 0.6}   # replaced by our own measurement in stage 07
+    blackbody_teff: {mode: blackbody}
+    sphinx_literature: {mode: flux, flux_mjy: 18.8, flux_mjy_err: 0.6}  # SPHINX value quoted by Connors+ 2026
+  reference_scenario: bare rock (A=0)
+  scenarios:
+    bare rock (A=0): {albedo: 0.0, eps: 0.0}
+    bare rock (A=0.1): {albedo: 0.1, eps: 0.0}
+    partial redistribution (eps=0.5): {albedo: 0.0, eps: 0.5}
+    full redistribution (A=0): {albedo: 0.0, eps: 1.0}
+    full redistribution (A=0.3): {albedo: 0.3, eps: 1.0}
+    "lit: Venus-like 100 mbar": {depth_ppm: 36.1, depth_err_ppm: 2.4}      # Connors+ 2026 Table 4
+    "lit: O2 + 1% CO2 100 mbar": {depth_ppm: 37.1, depth_err_ppm: 2.4}
+    "lit: thin O2 + 0.1% CO2 30 mbar": {depth_ppm: 91.0, depth_err_ppm: 6.0}
+
+# Published results to benchmark against (ppm).
+# "RWDDT HLSP": the Rocky Worlds team's own archive products (MAST HLSP, DOI 10.17909/qsyr-ny68,
+# Eureka!-based; files in data/benchmarks/gj3929b_hlsp/). Single-eclipse entries are v1.0.1
+# eclipse catalogs; the joint entry is "checkpoint02" (v1.0), which combines all four eclipses.
+published:
+  - {ref: "RWDDT HLSP", label: eclipse1, depth_ppm: -9.1, err_ppm: 95.5}
+  - {ref: "RWDDT HLSP", label: eclipse2, depth_ppm: 16.2, err_ppm: 78.1}
+  - {ref: "RWDDT HLSP", label: eclipse3, depth_ppm: 174.0, err_ppm: 37.4}
+  - {ref: "RWDDT HLSP", label: eclipse4, depth_ppm: 190.7, err_ppm: 130.9}
+  - {ref: "RWDDT HLSP", label: joint, depth_ppm: 142.5, err_ppm: 18.6}
+  - {ref: "Xue+25", label: eclipse1, depth_ppm: 177, err_ppm: 46}
+  - {ref: "Xue+25", label: eclipse2, depth_ppm: 143, err_ppm: 35}
+  - {ref: "Xue+25", label: joint_12, depth_ppm: 160, err_ppm: 26}
+  - {ref: "Connors+26 (FN-PCA)", label: eclipse1, depth_ppm: 190, err_ppm: 40}
+  - {ref: "Connors+26 (FN-PCA)", label: eclipse2, depth_ppm: 155, err_ppm: 34}
+  - {ref: "Connors+26 (FN-PCA)", label: eclipse3, depth_ppm: 60, err_ppm: 34}
+  - {ref: "Connors+26 (FN-PCA)", label: eclipse4, depth_ppm: 97, err_ppm: 78}
+  - {ref: "Connors+26 (FN-PCA)", label: joint, depth_ppm: 118, err_ppm: 22}
+  - {ref: "Connors+26 (FN-PCA)", label: joint_12, depth_ppm: 172, err_ppm: 26}
+  - {ref: "Connors+26 (poly3)", label: eclipse1, depth_ppm: 115, err_ppm: 53}
+  - {ref: "Connors+26 (poly3)", label: eclipse2, depth_ppm: 183, err_ppm: 40}
+  - {ref: "Connors+26 (poly3)", label: eclipse3, depth_ppm: 92, err_ppm: 39}
+  - {ref: "Connors+26 (poly3)", label: eclipse4, depth_ppm: 129, err_ppm: 89}
+  - {ref: "Connors+26 (poly3)", label: joint, depth_ppm: 126, err_ppm: 25}
+published_temperature:
+  - {ref: "Xue+25 (SPHINX)", T_b: 782, err: 79}
+  - {ref: "Xue+25 (observed flux)", T_b: 745, err: 76}
+  - {ref: "Connors+26", T_b: 641, err: 62}

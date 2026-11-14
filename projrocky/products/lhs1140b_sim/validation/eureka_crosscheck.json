@@ -1,0 +1,17 @@
+{
+  "n_integrations": 271,
+  "aperture_px": 5.0,
+  "annulus_px": [
+    16.0,
+    30.0
+  ],
+  "median_flux_ratio_rockyeye_over_eureka": 0.0051095470838198025,
+  "rms_relative_difference_ppm": 59.49379954525436,
+  "rockyeye_scatter_ppm": 720.0298301210607,
+  "eureka_scatter_ppm": 716.7420779665758,
+  "correlation_of_normalised_flux": 0.99841048777359,
+  "median_centroid_offset_px": [
+    53.92971288309306,
+    53.92605276089053
+  ]
+}
